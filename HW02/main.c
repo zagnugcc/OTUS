@@ -825,7 +825,7 @@ uint16_t decode_from_ISO_8859_5(uint8_t ch)
 
 int main(int argc, char *argv[])
 {
-    if (argc == 0 || argc > 4)
+    if (argc != 4)
     {
         return 1;
     }
@@ -874,6 +874,7 @@ int main(int argc, char *argv[])
         }
     }
 
-
+    fclose(sourceFile);
+    fclose(targetFile);
     return 0;
 }
