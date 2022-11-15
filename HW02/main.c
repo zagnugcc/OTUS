@@ -869,7 +869,7 @@ int main(int argc, char *argv[])
                unsigned int utf8_ch1 = cp1251_data[ch-128];
                // дальнейшие преобразования одинаковы для всех кодировок, их можно вынести из if проверки кодировки,что бы не повторять для каждой
                if (utf8_ch1 < 0x800) {
-                   fputc(0xC0 |utf8_ch1 >> 6, fout);
+                   fputc(0xC0 |utf8_ch1 >> 6, targetFile);
                } else if (utf8_ch1 < 0x8000){
                    // преобразуем в 3 байта и также записываем в файл
                }
@@ -877,7 +877,7 @@ int main(int argc, char *argv[])
                     // преобразуем в 4 айта и также записываем в файл
                 }
             }
-        } else if (strcmp(argv[2], "koi8") == 0)
+        else if (strcmp(argv[2], "koi8") == 0)
         {
             uint16_t utf8_ch1 = decodeFromKoi8(ch);
             fwrite(&utf8_ch1, sizeof(uint16_t), 1, targetFile);
