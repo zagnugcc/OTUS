@@ -872,10 +872,16 @@ int main(int argc, char *argv[])
                    fputc(0xC0 |utf8_ch1 >> 6, targetFile);
                } else if (utf8_ch1 < 0x8000){
                    // преобразуем в 3 байта и также записываем в файл
+                   fputc(0xE0 |utf8_ch1 >> 12, targetFile);
+                   fputc(0x80 | (utf8_ch1 >> 6 & 0x3F), targetFile);
                }
                 else{
                     // преобразуем в 4 айта и также записываем в файл
+                   fputc(0xF0 |utf8_ch1 >> 18, targetFile);
+                   fputc(0x80 | (utf8_ch1 >> 6 & 0x3F), targetFile);
+                   fputc(0x80 | (utf8_ch1 >> 6 & 0x3F), targetFile);
                 }
+                fputc(0x80 | (utf8_ch1 & 0x3F), targetFile);
             }
         else if (strcmp(argv[2], "koi8") == 0)
         {
