@@ -40,8 +40,6 @@ static unsigned int koi8_data[128] = {
         1055, 1071, 1056, 1057, 1058, 1059, 1046, 1042, 1068, 1067, 1047, 1064, 1069, 1065, 1063, 1066
 };
 
-void encode(FILE *targetFile, unsigned int utf8_ch1);
-
 int main(int argc, char *argv[])
 {
     if (argc != 4)
@@ -62,57 +60,45 @@ int main(int argc, char *argv[])
     }
 
     uint8_t ch;
-    unsigned int temp_ch;
     bool isContinue = true;
+    unsigned int *table;
+    if (strcmp(argv[2], "cp1251") == 0)
+      table = cp1251_data;
+    else if (strcmp(argv[2], "koi8") == 0)
+       table = koi8_data; 
+    else if (strcmp(argv[2], "iso8859-5") == 0)
+       table = iso_8859_5_data;
+     
     while (isContinue)
     {
-        fread(&ch, sizeof(uint8_t), 1, sourceFile);
-
-        if (ch <= 0x7f) {
-            fwrite(&ch, sizeof(uint8_t), 1, targetFile);
-        } else {
-            if (strcmp(argv[2], "cp1251") == 0)
-            {
-               temp_ch = cp1251_data[ch-128];
-               // дальнейшие преобразования одинаковы для всех кодировок, их можно вынести из if проверки кодировки,что бы не повторять для каждой
-                encode(targetFile, temp_ch);
-            }
-            else if (strcmp(argv[2], "koi8") == 0)
-            {
-                temp_ch = koi8_data[ch - 128];
-                encode(targetFile, temp_ch);
-            } else if (strcmp(argv[2], "iso8859-5") == 0)
-            {
-                temp_ch = iso_8859_5_data[ch - 128];
-                encode(targetFile, temp_ch);
-            }
+      fread(&ch, sizeof(uint8_t), 1, sourceFile);
+      
+      if (ch <= 0x7f) {
+        fwrite(&ch, sizeof(uint8_t), 1, targetFile);
+      }
+      else {
+        unsigned int utf8_ch = table[ch-128];
+        if (utf8_ch < 0x800) 
+          fputc(0xC0 |utf8_ch >> 6, targetFile);
+        else if (utf8_ch < 0x8000){
+          // преобразуем в 3 байта и также записываем в файл
+          fputc(0xE0 |utf8_ch >> 12, targetFile);
+          fputc(0x80 | (utf8_ch >> 6 & 0x3F), targetFile);
         }
-
-
-        if (feof(sourceFile))
-        {
-            isContinue = false;
+        else{
+          // преобразуем в 4 айта и также записываем в файл
+          fputc(0xF0 |utf8_ch >> 18, targetFile);
+          fputc(0x80 | (utf8_ch >> 12 & 0x3F), targetFile);
+          fputc(0x80 | (utf8_ch >> 6 & 0x3F), targetFile);
         }
+        fputc(0x80 | (utf8_ch & 0x3F), targetFile);
+      }
+      if (feof(sourceFile)){
+        isContinue = false;
+      }
     }
 
     fclose(sourceFile);
     fclose(targetFile);
     return 0;
-}
-
-void encode(FILE *targetFile, unsigned int utf8_ch1) {
-    if (utf8_ch1 < 0x800) {
-        fputc(0xC0 |utf8_ch1 >> 6, targetFile);
-    } else if (utf8_ch1 < 0x8000){
-        // преобразуем в 3 байта и также записываем в файл
-        fputc(0xE0 |utf8_ch1 >> 12, targetFile);
-        fputc(0x80 | (utf8_ch1 >> 6 & 0x3F), targetFile);
-    }
-     else{
-         // преобразуем в 4 айта и также записываем в файл
-        fputc(0xF0 |utf8_ch1 >> 18, targetFile);
-        fputc(0x80 | (utf8_ch1 >> 12 & 0x3F), targetFile);
-        fputc(0x80 | (utf8_ch1 >> 6 & 0x3F), targetFile);
-     }
-    fputc(0x80 | (utf8_ch1 & 0x3F), targetFile);
 }
